@@ -7,7 +7,7 @@ def interface():
         print("Queries:")
         print("=========")
         print("0. Forgotten bag in car with AN (query 1)")
-        print("1. Percent of busy taxis (query 3)")
+        print("1. Busy taxis (query 3)")
         print("2. Double charged client (query 4)")
         print("3. Least used taxis (query 7)")
         print("4. Research on location of residence (query 8)")
@@ -36,16 +36,31 @@ def execute(choice):
         LEFT JOIN Car ON Car.car_id = Ordering.car_id
         WHERE Ordering.date = "2017-11-28" AND Ordering.customer_id = 371 AND Car.color = "red" AND Car.plate_series LIKE "AN%";
         """
+    elif choice == 1:
+        title = "Number of used cars in timeframes:"
+        query = """
+        SELECT COUNT(*) as morning, afternoon, evening
+        FROM ordering, (SELECT COUNT(*) as afternoon
+                        FROM ordering
+                        WHERE date BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW()
+                        AND HOUR(end_time) <= 14 AND HOUR(start_time) >= 12) as noon,
+                        (SELECT COUNT(*) as evening
+                        FROM ordering
+                        WHERE date BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW()
+                        AND HOUR(end_time) <= 19 AND HOUR(start_time) >= 17) as eve
+        WHERE date BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW()
+        AND HOUR(end_time) <= 10 AND HOUR(start_time) >= 7;
+        """
     elif choice == 2:
         title = "IDs of double charged orders for user 371"
         query = """
-            SELECT Payment.order_id
-            FROM Payment
-            LEFT JOIN Ordering ON Ordering.order_id = Payment.order_id
-            WHERE Ordering.customer_id = 371 AND Ordering.date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()
-            GROUP BY Payment.order_id
-            HAVING COUNT(Payment.order_id) > 1;
-            """
+        SELECT Payment.order_id
+        FROM Payment
+        LEFT JOIN Ordering ON Ordering.order_id = Payment.order_id
+        WHERE Ordering.customer_id = 371 AND Ordering.date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()
+        GROUP BY Payment.order_id
+        HAVING COUNT(Payment.order_id) > 1;
+        """
     elif choice == 3:
         title = "IDs of 10% of least used cars:"
         query = """
